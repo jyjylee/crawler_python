@@ -20,6 +20,30 @@ def extract_indeed_pages():
     return max_page
 
 
+def extract_job(html):
+    ##Title
+    title = html.find("h2",{"class":"title"}).find("a")["title"]
+
+    ##Company-Name
+    company_name=""
+    company = html.find("div",{"class":"sjcl"}).find("div").find("span",{"class":"company"})
+    company_anchor =company.find("a")
+    
+    ##Location
+    location_span = html.find("div",{"class":"sjcl"}).find("span",{"class":"location accessible-contrast-color-location"})
+    location_div = html.find("div",{"class":"sjcl"}).find("div",{"class":"location accessible-contrast-color-location"})
+
+    if location_span is not None:
+        location=str(location_span.string)
+    else:
+        location=str(location_div.string)
+    
+    if company_anchor is not None:
+        company_name=str(company_anchor.string.strip())
+    else:
+        company_name=str(company.string.strip())
+    return {'title':title, 'company': company_name, 'location': location}
+
 def extract_indeed_jobs(last_page):
     jobs=[]
     last_page=1
@@ -28,15 +52,6 @@ def extract_indeed_jobs(last_page):
         soup =BeautifulSoup(result.text,"html.parser")
         results=soup.find_all("div",{"class": "jobsearch-SerpJobCard"})
         for result in results:
-            company_name=""
-            company = result.find("div",{"class":"sjcl"}).find("div").find("span",{"class":"company"})
-            company_anchor =company.find("a")
-
-            if company_anchor is not None:
-                company_name=str(company_anchor.string)
-            else:
-                company_name=str(company.string)
-
-            title = result.find("h2",{"class":"title"}).find("a")["title"]
-            print(f"company/title: {company_name} / {title}")
-        return jobs
+            job=extract_job(result)
+            jobs.append(job)
+    return jobs
